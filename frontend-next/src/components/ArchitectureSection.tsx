@@ -2,45 +2,29 @@
 
 import { motion, useInView } from 'framer-motion';
 import { useRef } from 'react';
-import Image from 'next/image';
+import { Database, Server, Smartphone, Lock, ShieldCheck, Activity } from 'lucide-react';
 
-const components = [
+const steps = [
     {
-        title: 'Bank Nodes',
-        description: 'Multiple financial institutions participate as nodes, each processing their own transaction data independently.',
-        icon: '🏦',
-        color: '#06b6d4',
+        icon: <Database className="w-6 h-6" />,
+        title: "1. Local Training",
+        description: "Instead of sending your transactions to a centralized server, the fraud detection model is downloaded to your institution's local servers."
     },
     {
-        title: 'Local Fraud Models',
-        description: 'Each bank trains ML models (Gradient Boosting, Random Forest) on their local transaction data.',
-        icon: '🧠',
-        color: '#3b82f6',
+        icon: <Lock className="w-6 h-6" />,
+        title: "2. Privacy-Preserving Updates",
+        description: "The model learns from your sensitive transaction data locally. Only the model's learned insights (weight updates) leave your network, never the actual data."
     },
     {
-        title: 'Encrypted Model Updates',
-        description: 'Model gradients and weights are encrypted before transmission — no raw data is ever shared.',
-        icon: '🔐',
-        color: '#8b5cf6',
+        icon: <Server className="w-6 h-6" />,
+        title: "3. Secure Aggregation",
+        description: "Our robust central server securely aggregates these updates from hundreds of financial institutions using advanced differential privacy."
     },
     {
-        title: 'Federated Aggregation Server',
-        description: 'Central server aggregates model updates using robust methods (Trimmed Mean, Median) to build global intelligence.',
-        icon: '⚡',
-        color: '#10b981',
-    },
-    {
-        title: 'Global Model Distribution',
-        description: 'The improved global model is securely distributed back to each participating bank for enhanced detection.',
-        icon: '🌐',
-        color: '#06b6d4',
-    },
-    {
-        title: 'Fraud Detection Pipeline',
-        description: 'Real-time scoring of transactions using the federated model, generating fraud probability scores with explanations.',
-        icon: '🛡️',
-        color: '#3b82f6',
-    },
+        icon: <Activity className="w-6 h-6" />,
+        title: "4. Global Intelligence",
+        description: "A smarter, globally-aware fraud model is continuously distributed back to all participants, protecting everyone from emerging threats."
+    }
 ];
 
 export default function ArchitectureSection() {
@@ -48,80 +32,108 @@ export default function ArchitectureSection() {
     const isInView = useInView(ref, { once: true, margin: '-100px' });
 
     return (
-        <section id="architecture" className="section-padding relative" ref={ref}>
-            <div className="absolute inset-0 bg-gradient-to-b from-transparent via-navy-900/30 to-transparent" />
+        <section id="architecture" className="py-24 relative overflow-hidden" ref={ref}>
+            {/* Background elements */}
+            <div className="absolute top-0 left-0 w-full h-full overflow-hidden z-0 pointer-events-none">
+                <div className="absolute top-[20%] right-[-10%] w-[500px] h-[500px] rounded-full bg-cyan-900/10 blur-[100px]" />
+                <div className="absolute bottom-[-10%] left-[-10%] w-[600px] h-[600px] rounded-full bg-blue-900/10 blur-[120px]" />
+            </div>
 
-            <div className="relative z-10 max-w-7xl mx-auto">
-                {/* Header */}
-                <motion.div
-                    initial={{ opacity: 0, y: 30 }}
-                    animate={isInView ? { opacity: 1, y: 0 } : {}}
-                    transition={{ duration: 0.7 }}
-                    className="text-center mb-16"
-                >
+            <div className="container mx-auto px-6 relative z-10 max-w-7xl">
+                <div className="text-center mb-16 max-w-3xl mx-auto">
                     <span className="inline-block px-4 py-1.5 mb-4 text-sm font-medium text-cyan-light bg-cyan/10 rounded-full border border-cyan/20">
                         System Design
                     </span>
-                    <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-white mb-6">
-                        System{' '}
-                        <span className="gradient-text">Architecture</span>
-                    </h2>
-                    <p className="text-lg text-slate-400 max-w-3xl mx-auto">
-                        A privacy-preserving federated learning architecture that enables cross-bank
-                        fraud detection without compromising data security.
+                    <motion.h2
+                        initial={{ opacity: 0, y: 30 }}
+                        animate={isInView ? { opacity: 1, y: 0 } : {}}
+                        transition={{ duration: 0.7 }}
+                        className="text-3xl md:text-5xl font-bold text-white mb-6"
+                    >
+                        How FedFortress <span className="gradient-text">Works</span>
+                    </motion.h2>
+                    <p className="text-slate-400 text-lg">
+                        Our decentralized architecture keeps your sensitive financial data on your local devices while collectively training a powerful global fraud detection model.
                     </p>
-                </motion.div>
+                </div>
 
-                {/* Architecture Diagram */}
-                <motion.div
-                    initial={{ opacity: 0, scale: 0.95 }}
-                    animate={isInView ? { opacity: 1, scale: 1 } : {}}
-                    transition={{ delay: 0.2, duration: 0.8 }}
-                    className="mb-16"
-                >
-                    <div className="glass rounded-2xl p-4 sm:p-8 border border-cyan/10 max-w-4xl mx-auto">
-                        <div className="relative w-full aspect-[4/3] rounded-xl overflow-hidden bg-navy-950">
-                            <Image
-                                src="/images/architecture.png"
-                                alt="FinAlliance System Architecture Diagram"
-                                fill
-                                className="object-contain"
-                                priority
-                            />
-                            {/* Animated glow overlay */}
-                            <div className="absolute inset-0 bg-gradient-to-t from-navy-950/40 to-transparent pointer-events-none" />
-                        </div>
-                    </div>
-                </motion.div>
-
-                {/* Component Cards */}
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {components.map((comp, i) => (
-                        <motion.div
-                            key={comp.title}
-                            initial={{ opacity: 0, y: 30 }}
-                            animate={isInView ? { opacity: 1, y: 0 } : {}}
-                            transition={{ delay: 0.4 + i * 0.1, duration: 0.6 }}
-                            className="glass rounded-2xl p-6 group hover:border-cyan/30 transition-all duration-500"
-                        >
-                            <div className="flex items-center gap-3 mb-4">
-                                <div className="w-12 h-12 rounded-xl flex items-center justify-center text-2xl"
-                                    style={{ backgroundColor: comp.color + '15' }}>
-                                    {comp.icon}
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
+                    {/* Left side - Steps */}
+                    <div className="space-y-8">
+                        {steps.map((step, index) => (
+                            <motion.div
+                                key={index}
+                                initial={{ opacity: 0, x: -20 }}
+                                animate={isInView ? { opacity: 1, x: 0 } : {}}
+                                transition={{ delay: index * 0.1 }}
+                                className="flex gap-6 items-start"
+                            >
+                                <div className="flex-shrink-0 w-12 h-12 rounded-xl bg-gradient-to-br from-cyan-900/40 to-blue-900/40 flex items-center justify-center border border-cyan/30 shadow-[0_0_15px_rgba(6,182,212,0.15)] text-cyan-light">
+                                    {step.icon}
                                 </div>
-                                <div className="w-px h-8 opacity-20"
-                                    style={{ backgroundColor: comp.color }} />
-                            </div>
-                            <h3 className="text-lg font-semibold text-white mb-2 group-hover:text-cyan-light transition-colors">
-                                {comp.title}
-                            </h3>
-                            <p className="text-sm text-slate-400 leading-relaxed">{comp.description}</p>
+                                <div>
+                                    <h3 className="text-xl font-bold text-white mb-2">{step.title}</h3>
+                                    <p className="text-slate-400 leading-relaxed">{step.description}</p>
+                                </div>
+                            </motion.div>
+                        ))}
+                    </div>
 
-                            {/* Bottom accent line */}
-                            <div className="mt-4 h-0.5 w-0 group-hover:w-full transition-all duration-500 rounded-full"
-                                style={{ backgroundColor: comp.color + '40' }} />
+                    {/* Right side - Visual Representation */}
+                    <motion.div
+                        initial={{ opacity: 0, scale: 0.95 }}
+                        animate={isInView ? { opacity: 1, scale: 1 } : {}}
+                        transition={{ duration: 0.5, delay: 0.2 }}
+                        className="relative"
+                    >
+                        <div className="relative rounded-2xl overflow-hidden glass border border-cyan/10 p-8 shadow-2xl flex flex-col items-center justify-center min-h-[400px]">
+                            {/* Diagram Background effect */}
+                            <div className="absolute inset-0 bg-gradient-to-br from-cyan-900/10 to-blue-900/10 z-0" />
+                            
+                            <div className="relative z-10 w-full h-full flex flex-col items-center justify-center gap-8">
+                                <div className="p-4 rounded-xl bg-navy-800 text-center border border-cyan/30 shadow-lg w-48">
+                                    <Server className="w-12 h-12 mx-auto text-cyan-light mb-2" />
+                                    <h4 className="font-bold text-white">Global Server</h4>
+                                    <p className="text-xs text-slate-400">Aggregates updates</p>
+                                </div>
+
+                                <div className="flex gap-4 items-center justify-center w-full">
+                                    <div className="w-px h-8 bg-gradient-to-b from-cyan/50 to-transparent"></div>
+                                </div>
+
+                                <div className="flex justify-around w-full gap-4">
+                                    <div className="p-3 rounded-lg bg-navy-800 text-center border border-navy-700 flex-1">
+                                        <Database className="w-8 h-8 mx-auto text-blue-400 mb-1" />
+                                        <p className="text-xs font-semibold text-slate-300">Bank Data A</p>
+                                    </div>
+                                    <div className="p-3 rounded-lg bg-navy-800 text-center border border-navy-700 flex-1">
+                                        <Lock className="w-8 h-8 mx-auto text-purple-400 mb-1" />
+                                        <p className="text-xs font-semibold text-slate-300">Local Train</p>
+                                    </div>
+                                    <div className="p-3 rounded-lg bg-navy-800 text-center border border-navy-700 flex-1">
+                                        <ShieldCheck className="w-8 h-8 mx-auto text-emerald-400 mb-1" />
+                                        <p className="text-xs font-semibold text-slate-300">Secure Comm</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Floating achievement/stat card */}
+                        <motion.div 
+                            initial={{ opacity: 0, y: 20 }}
+                            animate={isInView ? { opacity: 1, y: 0 } : {}}
+                            transition={{ delay: 0.5 }}
+                            className="absolute -bottom-6 -left-6 glass p-4 rounded-xl border border-cyan/20 shadow-xl flex items-center gap-4 z-20"
+                        >
+                            <div className="w-10 h-10 rounded-full bg-emerald-500/20 flex items-center justify-center text-emerald-400">
+                                <ShieldCheck size={20} />
+                            </div>
+                            <div>
+                                <p className="text-sm font-bold text-white">Zero Data Exposure</p>
+                                <p className="text-xs text-slate-400">100% Privacy Preserved</p>
+                            </div>
                         </motion.div>
-                    ))}
+                    </motion.div>
                 </div>
             </div>
         </section>

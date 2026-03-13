@@ -270,7 +270,7 @@ def run_baseline_training():
 def run_federated_training_api():
     data = request.json or {}
 
-    max_samples = int(data.get('max_samples', 1000))
+    max_samples = int(data.get('max_samples', 10000))
     # Automatically use quick_mode for smaller sample counts (fast demo)
     quick_mode = max_samples <= 2000
 
@@ -324,7 +324,7 @@ def run_federated_training_api():
 
 
 if __name__ == '__main__':
-    print("\n🛡️  FedFortress API Server")
+    print("\n[FedFortress API Server]")
     print("   Frontend: http://localhost:5000")
     print("   API:      http://localhost:5000/api/status\n")
     app.run(host='0.0.0.0', port=5000, debug=False, threaded=True, use_reloader=False)

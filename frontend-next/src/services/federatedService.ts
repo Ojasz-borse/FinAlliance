@@ -1,32 +1,35 @@
-import api from '../lib/api';
 import { FederatedStatus } from '../types/fraud';
 
 export const federatedService = {
     async trainLocal() {
-        const response = await api.post('/federated/train-local');
-        return response.data;
+        // Mock network delay
+        await new Promise(r => setTimeout(r, 1500));
+        return { success: true, message: 'Local training complete' };
     },
 
     async sendUpdate() {
-        const response = await api.post('/federated/send-update');
-        return response.data;
+        await new Promise(r => setTimeout(r, 1000));
+        return { success: true, message: 'Update sent securely' };
     },
 
     async aggregateModels() {
-        const response = await api.post('/federated/aggregate');
-        return response.data;
+        await new Promise(r => setTimeout(r, 2000));
+        return { success: true, message: 'Aggregation complete' };
     },
 
     async downloadGlobalModel() {
-        // Return blob for download
-        const response = await api.get('/federated/global-model', {
-            responseType: 'blob',
-        });
-        return response.data;
+        await new Promise(r => setTimeout(r, 1000));
+        // Return a dummy blob 
+        return new Blob(['mock model data'], { type: 'application/octet-stream' });
     },
 
     async getStatus(): Promise<FederatedStatus> {
-        const response = await api.get<FederatedStatus>('/federated/status');
-        return response.data;
+        return {
+            status: 'IDLE',
+            current_round: 1,
+            total_rounds: 3,
+            global_accuracy: 0.95,
+            participating_banks: ['BANK_1', 'BANK_2', 'BANK_3']
+        };
     }
 };

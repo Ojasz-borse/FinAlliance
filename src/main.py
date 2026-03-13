@@ -1,12 +1,12 @@
-﻿import copy
+import copy
 import torch
 import numpy as np
 import logging
 import pickle
 from pathlib import Path
-from src.models.simple_model import SimpleCNN
+from src.models import FraudMLP
 from src.client.client import Client
-from src.data.data_utils import load_cifar10, iid_split, create_dataloaders
+from src.data.data_utils import load_creditcard, iid_split, create_dataloaders
 from src.server.server import AsyncFLServer, ServerConfig
 from src.server.aggregation import ClientUpdate
 from src.privacy.dp import ServerDifferentialPrivacy
@@ -96,12 +96,12 @@ def run_federated_training_with_server(
     device = torch.device("cpu")
 
     # Load data and create client dataloaders
-    dataset = load_cifar10()
+    dataset = load_creditcard()
     subsets = iid_split(dataset, num_clients=num_clients)
     client_loaders = create_dataloaders(subsets, batch_size=64)
 
     # Initialize global model
-    global_model = SimpleCNN().to(device)
+    global_model = FraudMLP().to(device)
     global_model_params = global_model.state_dict()
     
     # Convert to numpy for server
@@ -205,7 +205,7 @@ def run_federated_training(
         malicious_clients=1,
         rounds=10,
         quick_mode=False,
-        max_samples=50000,
+        max_samples=10000,
         dp_enabled=True,
         dp_epsilon=1.0,
         dp_delta=1e-5,
@@ -213,15 +213,15 @@ def run_federated_training(
         learning_rate=0.01,
         attack_type="noise_injection"):
     """
-    Run federated learning training on CIFAR-10 dataset.
+    Run federated learning training on the creditcard.csv dataset.
     
     Args:
         aggregation: Aggregation method ("FedAvg", "Trimmed Mean", "Median")
         num_clients: Number of client devices
         malicious_clients: Number of malicious clients
         rounds: Number of federated learning rounds
-        quick_mode: If True, use subset of data for faster training
-        max_samples: Maximum samples to use (full CIFAR-10 has 50,000)
+        quick_mode: If True, use fewer samples for faster training
+        max_samples: Maximum samples to use (default: 10000)
         dp_enabled: Enable differential privacy
         dp_epsilon: DP privacy budget (smaller = more private, more noise)
         dp_delta: DP failure probability
@@ -234,20 +234,19 @@ def run_federated_training(
 
     device = torch.device("cpu")
 
-    # Load CIFAR-10 data (full dataset by default)
-    dataset = load_cifar10(
+    # Load credit card data
+    dataset = load_creditcard(
         quick_mode=quick_mode, 
-        max_samples=max_samples,
-        use_augmentation=True  # Use augmentation for real CIFAR-10
+        max_samples=max_samples
     )
-    logger.info(f"Loaded CIFAR-10 dataset: {len(dataset)} samples, {num_clients} clients")
+    logger.info(f"Loaded CSV dataset: {len(dataset)} samples, {num_clients} clients")
     
     subsets = iid_split(dataset, num_clients=num_clients)
     client_loaders = create_dataloaders(subsets, batch_size=64)
 
-    global_model = SimpleCNN().to(device)
+    global_model = FraudMLP().to(device)
 
-    # DP noise scale (calibrated for CIFAR-10 model weights)
+    # DP noise scale
     noise_scale = 0.0
     if dp_enabled:
         # Scale noise based on epsilon (higher epsilon = less noise)
@@ -357,7 +356,7 @@ def save_training_results(results, aggregation, num_clients, malicious_clients,
     # Generate filename with timestamp
     timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
     mode_str = "quick" if quick_mode else "full"
-    filename = f"cifar10_{aggregation.replace(' ', '_')}_{mode_str}_{timestamp}.pkl"
+    filename = f"fraud_{aggregation.replace(' ', '_')}_{mode_str}_{timestamp}.pkl"
     filepath = save_path / filename
     
     # Prepare data to save
@@ -372,7 +371,7 @@ def save_training_results(results, aggregation, num_clients, malicious_clients,
             "max_samples": max_samples,
             "dp_enabled": dp_enabled,
             "dp_epsilon": dp_epsilon,
-            "dataset": "CIFAR-10"
+            "dataset": "creditcard.csv"
         },
         "results": results,
         "summary": {
