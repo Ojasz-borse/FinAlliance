@@ -2,6 +2,7 @@
 
 import { motion, useInView } from 'framer-motion';
 import { useRef, useState } from 'react';
+import SectionParticles from './SectionParticles';
 
 const innovations = [
     {
@@ -64,12 +65,14 @@ export default function InnovationSection() {
         <section id="innovation" className="section-padding relative overflow-hidden" ref={ref}>
             {/* Rich animated background */}
             <div className="absolute inset-0 bg-gradient-to-b from-navy-950 via-navy-900/90 to-navy-950" />
-            <div className="absolute inset-0 bg-grid opacity-10" />
-            
-            {/* Animated orbs */}
-            <div className="absolute top-10 right-10 w-[400px] h-[400px] bg-purple/[0.07] rounded-full blur-[100px] animate-float" />
-            <div className="absolute bottom-10 left-10 w-[400px] h-[400px] bg-cyan/[0.07] rounded-full blur-[100px] animate-float-slow" />
-            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-blue/[0.04] rounded-full blur-[100px] animate-pulse-slow" />
+
+            {/* Dynamic canvas particles */}
+            <SectionParticles
+                colors={['139, 92, 246', '59, 130, 246', '6, 182, 212', '167, 139, 250']}
+                count={45}
+                speed={0.7}
+                glowIntensity={0.9}
+            />
 
             {/* Animated diagonal lines */}
             <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none">

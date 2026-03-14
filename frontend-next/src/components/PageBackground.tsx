@@ -62,62 +62,23 @@ export default function PageBackground() {
             '96, 165, 250',   // light blue
         ];
 
-        const particleCount = Math.floor((width * height) / 3500);
+        const particleCount = Math.floor((width * height) / 8000);
         const particles: Particle[] = [];
         for (let i = 0; i < particleCount; i++) {
             particles.push({
                 x: Math.random() * width,
                 y: Math.random() * height,
-                radius: 0.4 + Math.random() * 1.8,
-                baseOpacity: 0.15 + Math.random() * 0.55,
+                radius: 0.2 + Math.random() * 0.7,
+                baseOpacity: 0.05 + Math.random() * 0.2,
                 twinkleSpeed: 0.3 + Math.random() * 2.5,
                 twinkleOffset: Math.random() * Math.PI * 2,
                 color: particleColors[Math.floor(Math.random() * particleColors.length)],
-                drift: (Math.random() - 0.5) * 0.08,
+                drift: (Math.random() - 0.5) * 0.04,
             });
         }
 
         // ═══════════════════════════════════════════════
-        // 2. GLOWING ORBS — Large, bright, moving elements
-        // ═══════════════════════════════════════════════
-        interface GlowOrb {
-            x: number; y: number;
-            vx: number; vy: number;
-            radius: number;
-            color: string;
-            innerColor: string;
-            opacity: number;
-            pulseSpeed: number;
-            pulseOffset: number;
-            glowIntensity: number;
-        }
-
-        const orbPresets = [
-            { color: '6, 182, 212',   innerColor: '34, 211, 238',   radius: 180, glowIntensity: 1.0 },
-            { color: '139, 92, 246',  innerColor: '167, 139, 250',  radius: 160, glowIntensity: 0.9 },
-            { color: '59, 130, 246',  innerColor: '96, 165, 250',   radius: 140, glowIntensity: 0.85 },
-            { color: '16, 185, 129',  innerColor: '52, 211, 153',   radius: 130, glowIntensity: 0.8 },
-            { color: '139, 92, 246',  innerColor: '196, 181, 253',  radius: 170, glowIntensity: 0.95 },
-            { color: '6, 182, 212',   innerColor: '103, 232, 249',  radius: 120, glowIntensity: 0.75 },
-            { color: '59, 130, 246',  innerColor: '147, 197, 253',  radius: 150, glowIntensity: 0.9 },
-        ];
-
-        const orbs: GlowOrb[] = orbPresets.map((cfg, i) => ({
-            x: Math.random() * width,
-            y: (height / orbPresets.length) * i + Math.random() * (height / orbPresets.length),
-            vx: (0.12 + Math.random() * 0.35) * (Math.random() > 0.5 ? 1 : -1),
-            vy: (0.08 + Math.random() * 0.25) * (Math.random() > 0.5 ? 1 : -1),
-            radius: cfg.radius + Math.random() * 60,
-            color: cfg.color,
-            innerColor: cfg.innerColor,
-            opacity: 0.06 + Math.random() * 0.05,
-            pulseSpeed: 0.2 + Math.random() * 0.6,
-            pulseOffset: Math.random() * Math.PI * 2,
-            glowIntensity: cfg.glowIntensity,
-        }));
-
-        // ═══════════════════════════════════════════════
-        // 3. SHOOTING STREAKS — Occasional fast light trails
+        // 2. SHOOTING STREAKS — Occasional fast light trails
         // ═══════════════════════════════════════════════
         interface Streak {
             x: number; y: number; length: number;
@@ -200,10 +161,10 @@ export default function PageBackground() {
                 if (opacity <= 0.03) continue;
 
                 // Glow halo
-                const glowR = p.radius * 4;
+                const glowR = p.radius * 2;
                 const gradient = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, glowR);
-                gradient.addColorStop(0, `rgba(${p.color}, ${Math.min(0.7, opacity * 1.8)})`);
-                gradient.addColorStop(0.4, `rgba(${p.color}, ${opacity * 0.4})`);
+                gradient.addColorStop(0, `rgba(${p.color}, ${Math.min(0.25, opacity * 0.8)})`);
+                gradient.addColorStop(0.6, `rgba(${p.color}, ${opacity * 0.08})`);
                 gradient.addColorStop(1, `rgba(${p.color}, 0)`);
                 ctx.fillStyle = gradient;
                 ctx.beginPath();
@@ -211,58 +172,9 @@ export default function PageBackground() {
                 ctx.fill();
 
                 // Bright core
-                ctx.fillStyle = `rgba(${p.color}, ${Math.min(1, opacity + 0.4)})`;
+                ctx.fillStyle = `rgba(${p.color}, ${Math.min(0.6, opacity + 0.15)})`;
                 ctx.beginPath();
                 ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
-                ctx.fill();
-            }
-
-            // ── Draw and animate orbs ──
-            for (let i = 0; i < orbs.length; i++) {
-                const orb = orbs[i];
-
-                // Sinusoidal motion for organic feel
-                orb.x += orb.vx + Math.sin(time * 0.3 + i * 1.5) * 0.15;
-                orb.y += orb.vy + Math.cos(time * 0.25 + i * 2) * 0.1;
-
-                // Wrap around edges
-                if (orb.x < -orb.radius * 1.5) orb.x = width + orb.radius;
-                if (orb.x > width + orb.radius * 1.5) orb.x = -orb.radius;
-                if (orb.y < -orb.radius * 1.5) orb.y = height + orb.radius;
-                if (orb.y > height + orb.radius * 1.5) orb.y = -orb.radius;
-
-                if (orb.y + orb.radius * 1.5 < viewTop || orb.y - orb.radius * 1.5 > viewBottom) continue;
-
-                const pulse = Math.sin(time * orb.pulseSpeed + orb.pulseOffset);
-                const currentRadius = orb.radius + pulse * 25;
-                const currentOpacity = orb.opacity * orb.glowIntensity + pulse * 0.02;
-
-                // Multi-layered glow for depth
-                // Outer soft glow
-                const outerGrad = ctx.createRadialGradient(
-                    orb.x, orb.y, 0,
-                    orb.x, orb.y, currentRadius * 1.5
-                );
-                outerGrad.addColorStop(0, `rgba(${orb.color}, ${currentOpacity * 0.6})`);
-                outerGrad.addColorStop(0.3, `rgba(${orb.color}, ${currentOpacity * 0.3})`);
-                outerGrad.addColorStop(0.6, `rgba(${orb.color}, ${currentOpacity * 0.1})`);
-                outerGrad.addColorStop(1, `rgba(${orb.color}, 0)`);
-                ctx.fillStyle = outerGrad;
-                ctx.beginPath();
-                ctx.arc(orb.x, orb.y, currentRadius * 1.5, 0, Math.PI * 2);
-                ctx.fill();
-
-                // Inner bright core
-                const innerGrad = ctx.createRadialGradient(
-                    orb.x, orb.y, 0,
-                    orb.x, orb.y, currentRadius * 0.5
-                );
-                innerGrad.addColorStop(0, `rgba(${orb.innerColor}, ${currentOpacity * 2.5})`);
-                innerGrad.addColorStop(0.5, `rgba(${orb.innerColor}, ${currentOpacity * 1.0})`);
-                innerGrad.addColorStop(1, `rgba(${orb.innerColor}, 0)`);
-                ctx.fillStyle = innerGrad;
-                ctx.beginPath();
-                ctx.arc(orb.x, orb.y, currentRadius * 0.5, 0, Math.PI * 2);
                 ctx.fill();
             }
 

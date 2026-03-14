@@ -2,7 +2,8 @@
 
 import { motion } from 'framer-motion';
 import { useInView } from 'framer-motion';
-import { useRef, useEffect, useState } from 'react';
+import { useRef } from 'react';
+import SectionParticles from './SectionParticles';
 
 const barriers = [
     {
@@ -58,50 +59,6 @@ const fraudTypes = [
     { label: 'Money Laundering', icon: '💰' },
 ];
 
-// Floating particles component
-function FloatingParticles({ count = 20, color = '#06b6d4' }: { count?: number; color?: string }) {
-    const [particles] = useState(() =>
-        Array.from({ length: count }, (_, i) => ({
-            id: i,
-            x: Math.random() * 100,
-            y: Math.random() * 100,
-            size: 2 + Math.random() * 3,
-            duration: 15 + Math.random() * 20,
-            delay: Math.random() * 10,
-        }))
-    );
-
-    return (
-        <div className="absolute inset-0 overflow-hidden pointer-events-none">
-            {particles.map((p) => (
-                <motion.div
-                    key={p.id}
-                    className="absolute rounded-full"
-                    style={{
-                        width: p.size,
-                        height: p.size,
-                        left: `${p.x}%`,
-                        top: `${p.y}%`,
-                        backgroundColor: color,
-                        opacity: 0.15,
-                    }}
-                    animate={{
-                        y: [-20, 20, -20],
-                        x: [-10, 10, -10],
-                        opacity: [0.1, 0.3, 0.1],
-                    }}
-                    transition={{
-                        duration: p.duration,
-                        delay: p.delay,
-                        repeat: Infinity,
-                        ease: 'easeInOut',
-                    }}
-                />
-            ))}
-        </div>
-    );
-}
-
 export default function ProblemSection() {
     const ref = useRef(null);
     const isInView = useInView(ref, { once: true, margin: '-100px' });
@@ -110,17 +67,17 @@ export default function ProblemSection() {
         <section id="problem" className="section-padding relative overflow-hidden" ref={ref}>
             {/* Animated background */}
             <div className="absolute inset-0 bg-gradient-to-b from-navy-950 via-navy-900/80 to-navy-950" />
-            <div className="absolute inset-0 bg-grid opacity-10" />
-            
-            {/* Animated orbs */}
-            <div className="absolute top-0 right-0 w-[400px] h-[400px] bg-red-500/[0.04] rounded-full blur-[100px] animate-float-slow" />
-            <div className="absolute bottom-0 left-0 w-[400px] h-[400px] bg-cyan/[0.04] rounded-full blur-[100px] animate-float" />
-            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-purple/[0.03] rounded-full blur-[120px] animate-pulse-slow" />
 
-            {/* Floating particles */}
-            <FloatingParticles count={25} color="#ef4444" />
+            {/* Dynamic canvas particles */}
+            <SectionParticles
+                colors={['239, 68, 68', '249, 115, 22', '6, 182, 212']}
+                count={50}
+                speed={0.8}
+                glowIntensity={0.9}
+            />
 
             <div className="relative z-10 max-w-7xl mx-auto">
+
                 {/* Header */}
                 <motion.div
                     initial={{ opacity: 0, y: 30 }}

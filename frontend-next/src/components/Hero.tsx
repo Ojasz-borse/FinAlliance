@@ -3,6 +3,7 @@
 import { useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
 import * as THREE from 'three';
+import SectionParticles from './SectionParticles';
 
 function NetworkGlobe() {
     const mountRef = useRef<HTMLDivElement>(null);
@@ -313,37 +314,17 @@ export default function Hero() {
         <section className="relative min-h-screen flex items-center justify-center overflow-hidden">
             {/* Deep background */}
             <div className="absolute inset-0 bg-navy-950" />
-            <div className="absolute inset-0 bg-gradient-to-b from-cyan/[0.04] via-transparent to-navy-900/80" />
-            <div className="absolute inset-0 bg-gradient-to-tr from-purple/[0.03] via-transparent to-blue/[0.03]" />
 
-            {/* Multi-layered radial glow behind globe — pulsing, breathing effect */}
-            <div
-                className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[900px] h-[900px] rounded-full blur-3xl"
-                style={{
-                    background: 'radial-gradient(circle, rgba(6,182,212,0.10) 0%, rgba(59,130,246,0.04) 40%, transparent 70%)',
-                    animation: 'pulseGlow 6s ease-in-out infinite',
-                }}
-            />
-            <div
-                className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[700px] rounded-full blur-3xl"
-                style={{
-                    background: 'radial-gradient(circle, rgba(139,92,246,0.08) 0%, rgba(59,130,246,0.03) 50%, transparent 70%)',
-                    animation: 'pulseGlow 8s ease-in-out 2s infinite',
-                }}
-            />
-            <div
-                className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] rounded-full blur-2xl"
-                style={{
-                    background: 'radial-gradient(circle, rgba(34,211,238,0.06) 0%, transparent 60%)',
-                    animation: 'pulseGlow 5s ease-in-out 1s infinite',
-                }}
+            {/* Dynamic canvas particles */}
+            <SectionParticles
+                colors={['6, 182, 212', '59, 130, 246', '139, 92, 246', '34, 211, 238']}
+                count={55}
+                speed={0.5}
+                glowIntensity={1}
             />
 
             {/* 3D Globe */}
             <NetworkGlobe />
-
-            {/* Grid overlay */}
-            <div className="absolute inset-0 bg-grid opacity-10" />
 
             {/* Content */}
             <div className="relative z-10 max-w-5xl mx-auto px-4 sm:px-6 text-center">

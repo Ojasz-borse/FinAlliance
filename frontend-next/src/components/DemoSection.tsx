@@ -2,6 +2,7 @@
 
 import { motion, useInView, AnimatePresence } from 'framer-motion';
 import { useRef, useState, useEffect } from 'react';
+import SectionParticles from './SectionParticles';
 
 const pipelineSteps = [
     {
@@ -91,12 +92,14 @@ export default function DemoSection() {
         <section id="demo" className="section-padding relative overflow-hidden" ref={ref}>
             {/* Animated background */}
             <div className="absolute inset-0 bg-gradient-to-b from-navy-950 via-navy-900 to-navy-950" />
-            <div className="absolute inset-0 bg-grid opacity-10" />
-            
-            {/* Animated orbs */}
-            <div className="absolute top-20 left-10 w-[400px] h-[400px] bg-cyan/[0.06] rounded-full blur-[100px] animate-float" />
-            <div className="absolute bottom-20 right-10 w-[400px] h-[400px] bg-emerald/[0.06] rounded-full blur-[100px] animate-float-slow" />
-            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-blue/[0.04] rounded-full blur-[100px] animate-pulse-slow" />
+
+            {/* Dynamic canvas particles */}
+            <SectionParticles
+                colors={['16, 185, 129', '6, 182, 212', '52, 211, 153']}
+                count={40}
+                speed={0.6}
+                glowIntensity={0.85}
+            />
 
             {/* Animated circuit lines */}
             <div className="absolute inset-0 pointer-events-none overflow-hidden">

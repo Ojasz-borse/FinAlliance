@@ -2,6 +2,7 @@
 
 import { motion, useInView } from 'framer-motion';
 import { useRef, useState } from 'react';
+import SectionParticles from './SectionParticles';
 
 const steps = [
     {
@@ -87,16 +88,14 @@ export default function SolutionSection() {
         <section id="solution" className="section-padding relative overflow-hidden" ref={ref}>
             {/* Animated background */}
             <div className="absolute inset-0 bg-gradient-to-b from-navy-950 via-navy-900 to-navy-950" />
-            <div className="absolute inset-0 bg-grid opacity-10" />
-            
-            {/* Animated orbs */}
-            <div className="absolute top-20 left-20 w-[350px] h-[350px] bg-cyan/[0.06] rounded-full blur-[100px] animate-float" />
-            <div className="absolute bottom-20 right-20 w-[350px] h-[350px] bg-blue/[0.06] rounded-full blur-[100px] animate-float-slow" />
-            <div className="absolute top-1/3 right-1/4 w-[250px] h-[250px] bg-purple/[0.05] rounded-full blur-[80px] animate-pulse-slow" />
 
-            {/* Floating light streaks */}
-            <div className="absolute top-0 left-1/4 w-px h-full bg-gradient-to-b from-transparent via-cyan/10 to-transparent" />
-            <div className="absolute top-0 right-1/3 w-px h-full bg-gradient-to-b from-transparent via-blue/10 to-transparent" />
+            {/* Dynamic canvas particles */}
+            <SectionParticles
+                colors={['6, 182, 212', '59, 130, 246', '139, 92, 246']}
+                count={45}
+                speed={0.6}
+                glowIntensity={0.85}
+            />
 
             <div className="relative z-10 max-w-6xl mx-auto">
                 {/* Header */}

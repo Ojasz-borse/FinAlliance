@@ -2,6 +2,7 @@
 
 import { motion, useInView } from 'framer-motion';
 import { useRef } from 'react';
+import SectionParticles from './SectionParticles';
 
 const techStack = [
     'Next.js',
@@ -26,11 +27,14 @@ export default function Footer() {
         <footer ref={ref} className="relative border-t border-white/5 overflow-hidden">
             {/* Animated background */}
             <div className="absolute inset-0 bg-gradient-to-t from-navy-950 via-navy-900/80 to-navy-950" />
-            <div className="absolute inset-0 bg-grid opacity-5" />
-            
-            {/* Subtle animated orbs */}
-            <div className="absolute bottom-0 left-1/4 w-[300px] h-[300px] bg-cyan/[0.04] rounded-full blur-[80px] animate-pulse-slow" />
-            <div className="absolute bottom-0 right-1/4 w-[300px] h-[300px] bg-purple/[0.04] rounded-full blur-[80px] animate-pulse-slow" style={{ animationDelay: '2s' }} />
+
+            {/* Dynamic canvas particles */}
+            <SectionParticles
+                colors={['6, 182, 212', '139, 92, 246', '59, 130, 246']}
+                count={30}
+                speed={0.4}
+                glowIntensity={0.7}
+            />
 
             <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
                 <motion.div
