@@ -9,27 +9,166 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from flask import Flask, request, jsonify, Response, send_from_directory
 from flask_cors import CORS
 
-app = Flask(__name__, static_folder='frontend', static_url_path='')
+app = Flask(__name__)
 CORS(app)
 
-# ── Serve frontend ──
-@app.route('/')
-def index():
-    return send_from_directory('frontend', 'index.html')
+import csv
+import math
+import random
+import hashlib
+from pathlib import Path
 
-@app.route('/<path:path>')
-def serve_static(path):
-    return send_from_directory('frontend', path)
-
-# ── Serve diagnostic page ──
-@app.route('/diagnostic')
-def diagnostic():
-    return send_from_directory('frontend', 'diagnostic.html')
+CSV_PATH = Path(__file__).parent / 'data' / 'dataset' / 'creditcard.csv'
 
 # ── API: Health check ──
+@app.route('/')
 @app.route('/api/status')
 def status():
-    return jsonify({"status": "ok", "message": "FedFortress API is running"})
+    return jsonify({"status": "ok", "message": "FinAlliance API is running"})
+
+# ── API: Get all transactions (from creditcard.csv) ──
+@app.route('/api/transactions/all')
+def get_all_transactions():
+    try:
+        transactions = []
+        with open(CSV_PATH, 'r') as f:
+            reader = csv.DictReader(f)
+            for i, row in enumerate(reader):
+                if i >= 50:
+                    break
+                amount = float(row.get('Amount', 0))
+                fraud_class = int(float(row.get('Class', 0)))
+                # Generate deterministic bank_id and category from row data
+                row_hash = hashlib.md5(str(row.get('V1', str(i))).encode()).hexdigest()
+                banks = ['BANK_ALPHA', 'BANK_BETA', 'BANK_GAMMA', 'BANK_DELTA']
+                categories = ['Retail', 'Electronics', 'Travel', 'Dining', 'Wire Transfer', 'Crypto']
+                locations = ['Mumbai, IN', 'New York, US', 'London, UK', 'Tokyo, JP', 'Berlin, DE', 'Singapore, SG']
+                
+                transactions.append({
+                    'id': 1000 + i,
+                    'bank_id': banks[int(row_hash, 16) % len(banks)],
+                    'amount': round(amount, 2),
+                    'merchant_category': categories[int(row_hash[:4], 16) % len(categories)],
+                    'location': locations[int(row_hash[4:8], 16) % len(locations)],
+                    'timestamp': f"2026-03-14T{(i % 24):02d}:{(i * 7 % 60):02d}:00Z",
+                    'fraud_score': round(fraud_class * 0.85 + (1 - fraud_class) * random.uniform(0, 0.15), 4),
+                    'status': 'FLAGGED' if fraud_class == 1 else 'APPROVED'
+                })
+        return jsonify(transactions)
+    except FileNotFoundError:
+        return jsonify([]), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+# ── API: High risk alerts ──
+@app.route('/api/fraud/high-risk')
+def get_high_risk():
+    try:
+        alerts = []
+        with open(CSV_PATH, 'r') as f:
+            reader = csv.DictReader(f)
+            for i, row in enumerate(reader):
+                fraud_class = int(float(row.get('Class', 0)))
+                if fraud_class == 1:
+                    amount = float(row.get('Amount', 0))
+                    row_hash = hashlib.md5(str(row.get('V1', str(i))).encode()).hexdigest()
+                    banks = ['BANK_ALPHA', 'BANK_BETA', 'BANK_GAMMA', 'BANK_DELTA']
+                    categories = ['Retail', 'Electronics', 'Travel', 'Dining', 'Wire Transfer', 'Crypto']
+                    locations = ['Mumbai, IN', 'New York, US', 'London, UK', 'Tokyo, JP', 'Berlin, DE', 'Singapore, SG']
+                    
+                    alerts.append({
+                        'id': 1000 + i,
+                        'bank_id': banks[int(row_hash, 16) % len(banks)],
+                        'amount': round(amount, 2),
+                        'merchant_category': categories[int(row_hash[:4], 16) % len(categories)],
+                        'location': locations[int(row_hash[4:8], 16) % len(locations)],
+                        'timestamp': f"2026-03-14T{(i % 24):02d}:{(i * 7 % 60):02d}:00Z",
+                        'fraud_score': round(0.75 + random.uniform(0, 0.25), 4),
+                        'status': 'FLAGGED'
+                    })
+                    if len(alerts) >= 20:
+                        break
+        return jsonify(alerts)
+    except FileNotFoundError:
+        return jsonify([]), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+# ── API: Fraud prediction ──
+@app.route('/api/fraud/predict', methods=['POST'])
+def predict_fraud():
+    data = request.json or {}
+    amount = float(data.get('amount', 0))
+    category = data.get('merchant_category', 'retail').lower()
+    location = data.get('location', '')
+    timestamp_str = data.get('timestamp', '')
+    
+    # Risk scoring heuristics
+    risk = 0.0
+    
+    # Amount-based risk
+    if amount > 10000:
+        risk += 0.35
+    elif amount > 5000:
+        risk += 0.25
+    elif amount > 2000:
+        risk += 0.15
+    elif amount > 500:
+        risk += 0.05
+    
+    # Category risk
+    high_risk_categories = ['crypto', 'wire transfer', 'transfer', 'electronics']
+    medium_risk_categories = ['travel', 'luxury']
+    if category in high_risk_categories:
+        risk += 0.25
+    elif category in medium_risk_categories:
+        risk += 0.10
+    
+    # Time-based risk (late night transactions)
+    try:
+        from datetime import datetime
+        ts = datetime.fromisoformat(timestamp_str.replace('Z', '+00:00'))
+        hour = ts.hour
+        if 0 <= hour < 6:
+            risk += 0.20
+        elif 22 <= hour <= 23:
+            risk += 0.10
+    except:
+        pass
+    
+    # Add slight randomness for realism
+    risk += random.uniform(-0.05, 0.10)
+    risk = max(0.01, min(0.99, risk))
+    
+    # Determine risk level
+    if risk >= 0.65:
+        risk_level = 'HIGH'
+    elif risk >= 0.35:
+        risk_level = 'MEDIUM'
+    else:
+        risk_level = 'LOW'
+    
+    return jsonify({
+        'fraud_probability': round(risk, 4),
+        'risk_level': risk_level,
+        'transaction_id': random.randint(10000, 99999),
+        'analysis': {
+            'amount_risk': 'High' if amount > 5000 else 'Medium' if amount > 1000 else 'Low',
+            'category_risk': 'High' if category in high_risk_categories else 'Normal',
+            'time_risk': 'Suspicious' if risk > 0.5 else 'Normal',
+        }
+    })
+
+# ── API: Federated status ──
+@app.route('/api/federated/status')
+def federated_status():
+    return jsonify({
+        'status': 'IDLE',
+        'current_round': 0,
+        'total_rounds': 5,
+        'global_accuracy': 94.2,
+        'participating_banks': ['BANK_ALPHA', 'BANK_BETA', 'BANK_GAMMA', 'BANK_DELTA']
+    })
 
 # ── API: Client Diagnostic Analyzer ──
 @app.route('/api/analyze', methods=['POST'])
@@ -321,10 +460,59 @@ def run_federated_training_api():
                     headers={'Cache-Control': 'no-cache',
                              'X-Accel-Buffering': 'no',
                              'Connection': 'keep-alive'})
+# ── API: Simulate sending encrypted model update ──
+@app.route('/api/federated/send-update', methods=['POST'])
+def send_model_update():
+    """Simulate encrypting and sending local model weights to the aggregation server."""
+    import hashlib
+    data = request.json or {}
+    bank_id = data.get('bank_id', 'BANK_ALPHA')
+    
+    # Simulate processing
+    time.sleep(1)
+    
+    # Generate a realistic update hash
+    update_hash = hashlib.sha256(f"{bank_id}_{time.time()}".encode()).hexdigest()[:16]
+    
+    return jsonify({
+        'status': 'success',
+        'bank_id': bank_id,
+        'update_id': f"UPD-{update_hash.upper()}",
+        'encrypted': True,
+        'size_bytes': 2457600,
+        'layers_updated': 6,
+        'timestamp': time.strftime('%Y-%m-%dT%H:%M:%SZ'),
+        'message': f'Encrypted model update from {bank_id} submitted to aggregation server'
+    })
+
+# ── API: Download global model ──
+@app.route('/api/federated/download-model')
+def download_global_model():
+    """Generate and return the current global model as a downloadable file."""
+    import struct
+    
+    # Create a realistic model binary header + random weights
+    model_data = bytearray()
+    # Header
+    model_data.extend(b'FINALLIANCE_MODEL_v1.0\x00')
+    # Metadata
+    model_data.extend(struct.pack('I', 6))  # num layers
+    model_data.extend(struct.pack('I', 30))  # input features
+    model_data.extend(struct.pack('I', 2))   # output classes
+    # Simulated weights (small binary blob)
+    import random
+    for _ in range(1024):
+        model_data.extend(struct.pack('f', random.gauss(0, 0.1)))
+    
+    return Response(
+        bytes(model_data),
+        mimetype='application/octet-stream',
+        headers={'Content-Disposition': 'attachment; filename=global_model_finalliance.pt'}
+    )
 
 
 if __name__ == '__main__':
-    print("\n[FedFortress API Server]")
-    print("   Frontend: http://localhost:5000")
+    print("\n[FinAlliance API Server]")
+    print("   Frontend: http://localhost:3000")
     print("   API:      http://localhost:5000/api/status\n")
     app.run(host='0.0.0.0', port=5000, debug=False, threaded=True, use_reloader=False)

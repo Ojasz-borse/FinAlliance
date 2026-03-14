@@ -6,11 +6,11 @@ import { motion, AnimatePresence } from 'framer-motion';
 const navLinks = [
   { label: 'Problem', href: '/#problem' },
   { label: 'Solution', href: '/#solution' },
-  { label: 'Architecture', href: '/#architecture' },
-  { label: 'AI Models', href: '/#ai-models' },
+  { label: 'Innovation', href: '/#innovation' },
+  { label: 'Demo', href: '/#demo' },
   { label: 'Dashboard', href: '/dashboard' },
   { label: 'Fraud Check', href: '/fraud-check' },
-  { label: 'Model Trainer', href: '/model-trainer' }
+  { label: 'FL Console', href: '/federated' },
 ];
 
 export default function Navbar() {
@@ -61,10 +61,10 @@ export default function Navbar() {
           {/* CTA + Mobile Toggle */}
           <div className="flex items-center gap-3">
             <a
-              href="#architecture"
+              href="/dashboard"
               className="hidden sm:inline-flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg bg-gradient-to-r from-cyan to-blue text-white hover:shadow-lg hover:shadow-cyan/25 transition-all duration-300 hover:scale-105"
             >
-              View Architecture
+              Open Dashboard
               <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6" />
               </svg>
@@ -109,11 +109,11 @@ export default function Navbar() {
                 </a>
               ))}
               <a
-                href="#architecture"
+                href="/dashboard"
                 onClick={() => setMobileOpen(false)}
                 className="block px-4 py-3 mt-2 text-center font-medium rounded-lg bg-gradient-to-r from-cyan to-blue text-white"
               >
-                View Architecture
+                Open Dashboard
               </a>
             </div>
           </motion.div>

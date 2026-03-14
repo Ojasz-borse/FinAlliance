@@ -2,131 +2,348 @@
 
 import { useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
+import * as THREE from 'three';
 
-function FloatingNodes() {
-    const canvasRef = useRef<HTMLCanvasElement>(null);
+function NetworkGlobe() {
+    const mountRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
-        const canvas = canvasRef.current;
-        if (!canvas) return;
-        const ctx = canvas.getContext('2d');
-        if (!ctx) return;
+        if (!mountRef.current) return;
 
-        let animationId: number;
-        let width = window.innerWidth;
-        let height = window.innerHeight;
+        const container = mountRef.current;
+        const width = container.clientWidth;
+        const height = container.clientHeight;
 
-        canvas.width = width;
-        canvas.height = height;
+        const scene = new THREE.Scene();
+        const camera = new THREE.PerspectiveCamera(55, width / height, 0.1, 1000);
+        camera.position.set(0, 0, 5.5);
 
-        interface Node {
-            x: number;
-            y: number;
-            vx: number;
-            vy: number;
-            radius: number;
-            color: string;
-            pulseOffset: number;
+        const renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
+        renderer.setSize(width, height);
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+        renderer.setClearColor(0x000000, 0);
+        container.appendChild(renderer.domElement);
+
+        const globeGroup = new THREE.Group();
+        scene.add(globeGroup);
+
+        // ── 1. Main wireframe sphere (VISIBLE) ──
+        const sphereGeo = new THREE.IcosahedronGeometry(2.0, 2);
+        const sphereMat = new THREE.MeshBasicMaterial({
+            color: 0x06b6d4,
+            wireframe: true,
+            transparent: true,
+            opacity: 0.15,
+        });
+        const sphere = new THREE.Mesh(sphereGeo, sphereMat);
+        globeGroup.add(sphere);
+
+        // ── 2. Second wireframe layer (creates depth) ──
+        const sphere2Geo = new THREE.IcosahedronGeometry(2.05, 3);
+        const sphere2Mat = new THREE.MeshBasicMaterial({
+            color: 0x3b82f6,
+            wireframe: true,
+            transparent: true,
+            opacity: 0.06,
+        });
+        const sphere2 = new THREE.Mesh(sphere2Geo, sphere2Mat);
+        sphere2.rotation.set(0.5, 0.3, 0);
+        globeGroup.add(sphere2);
+
+        // ── 3. Inner glow sphere ──
+        const innerGlowGeo = new THREE.SphereGeometry(1.9, 32, 32);
+        const innerGlowMat = new THREE.MeshBasicMaterial({
+            color: 0x06b6d4,
+            transparent: true,
+            opacity: 0.05,
+            side: THREE.BackSide,
+        });
+        globeGroup.add(new THREE.Mesh(innerGlowGeo, innerGlowMat));
+
+        // ── 4. Orbital rings (bright, tilted) ──
+        const ringConfigs = [
+            { color: 0x06b6d4, radius: 2.5, tilt: { x: 0.4, y: 0, z: 0.2 }, opacity: 0.25 },
+            { color: 0x3b82f6, radius: 2.65, tilt: { x: -0.6, y: 0.4, z: -0.3 }, opacity: 0.2 },
+            { color: 0x8b5cf6, radius: 2.8, tilt: { x: 0.2, y: -0.5, z: 0.6 }, opacity: 0.18 },
+        ];
+        const rings: THREE.Line[] = [];
+        ringConfigs.forEach((cfg) => {
+            const curve = new THREE.EllipseCurve(0, 0, cfg.radius, cfg.radius, 0, Math.PI * 2, false, 0);
+            const pts = curve.getPoints(120).map(p => new THREE.Vector3(p.x, p.y, 0));
+            const geo = new THREE.BufferGeometry().setFromPoints(pts);
+            const mat = new THREE.LineBasicMaterial({ color: cfg.color, transparent: true, opacity: cfg.opacity });
+            const ring = new THREE.Line(geo, mat);
+            ring.rotation.set(cfg.tilt.x, cfg.tilt.y, cfg.tilt.z);
+            globeGroup.add(ring);
+            rings.push(ring);
+        });
+
+        // ── 5. Network nodes (bigger, more visible, with halos) ──
+        const nodeCount = 14;
+        const nodes: THREE.Mesh[] = [];
+        const nodeHalos: THREE.Mesh[] = [];
+        const nodeBasePos: THREE.Vector3[] = [];
+        const nodeColors = [0x06b6d4, 0x3b82f6, 0x8b5cf6, 0x10b981, 0x22d3ee, 0x60a5fa];
+
+        for (let i = 0; i < nodeCount; i++) {
+            const y = 1 - (i / (nodeCount - 1)) * 2;
+            const radiusAtY = Math.sqrt(1 - y * y);
+            const theta = Math.PI * (1 + Math.sqrt(5)) * i;
+            const x = Math.cos(theta) * radiusAtY;
+            const z = Math.sin(theta) * radiusAtY;
+            const pos = new THREE.Vector3(x * 2.05, y * 2.05, z * 2.05);
+            const color = nodeColors[i % nodeColors.length];
+
+            // Main node (bright dot)
+            const nGeo = new THREE.SphereGeometry(0.05, 12, 12);
+            const nMat = new THREE.MeshBasicMaterial({ color, transparent: true, opacity: 1.0 });
+            const node = new THREE.Mesh(nGeo, nMat);
+            node.position.copy(pos);
+            globeGroup.add(node);
+            nodes.push(node);
+            nodeBasePos.push(pos.clone());
+
+            // Glow halo
+            const hGeo = new THREE.SphereGeometry(0.12, 12, 12);
+            const hMat = new THREE.MeshBasicMaterial({ color, transparent: true, opacity: 0.25 });
+            const halo = new THREE.Mesh(hGeo, hMat);
+            halo.position.copy(pos);
+            globeGroup.add(halo);
+            nodeHalos.push(halo);
         }
 
-        const nodes: Node[] = Array.from({ length: 25 }, () => ({
-            x: Math.random() * width,
-            y: Math.random() * height,
-            vx: (Math.random() - 0.5) * 0.5,
-            vy: (Math.random() - 0.5) * 0.5,
-            radius: Math.random() * 3 + 1.5,
-            color: ['#06b6d4', '#3b82f6', '#8b5cf6', '#10b981'][Math.floor(Math.random() * 4)],
-            pulseOffset: Math.random() * Math.PI * 2,
-        }));
+        // ── 6. Connections (curved bright lines) ──
+        for (let i = 0; i < nodeBasePos.length; i++) {
+            for (let j = i + 1; j < nodeBasePos.length; j++) {
+                if (nodeBasePos[i].distanceTo(nodeBasePos[j]) < 2.8) {
+                    const mid = nodeBasePos[i].clone().add(nodeBasePos[j]).multiplyScalar(0.5);
+                    mid.normalize().multiplyScalar(2.3);
+                    const curve = new THREE.QuadraticBezierCurve3(nodeBasePos[i], mid, nodeBasePos[j]);
+                    const geo = new THREE.BufferGeometry().setFromPoints(curve.getPoints(30));
+                    const mat = new THREE.LineBasicMaterial({ color: 0x06b6d4, transparent: true, opacity: 0.15 });
+                    globeGroup.add(new THREE.Line(geo, mat));
+                }
+            }
+        }
+
+        // ── 7. Flowing data particles on orbital rings ──
+        interface OrbParticle { mesh: THREE.Mesh; trail: THREE.Mesh; ringIdx: number; angle: number; speed: number; radius: number; }
+        const orbParticles: OrbParticle[] = [];
+        for (let i = 0; i < 24; i++) {
+            const ri = i % 3;
+            const color = ringConfigs[ri].color;
+            // Main particle
+            const pGeo = new THREE.SphereGeometry(0.025, 8, 8);
+            const pMat = new THREE.MeshBasicMaterial({ color, transparent: true, opacity: 0.9 });
+            const pMesh = new THREE.Mesh(pGeo, pMat);
+            globeGroup.add(pMesh);
+            // Trail glow
+            const tGeo = new THREE.SphereGeometry(0.06, 8, 8);
+            const tMat = new THREE.MeshBasicMaterial({ color, transparent: true, opacity: 0.2 });
+            const tMesh = new THREE.Mesh(tGeo, tMat);
+            globeGroup.add(tMesh);
+
+            orbParticles.push({
+                mesh: pMesh, trail: tMesh, ringIdx: ri,
+                angle: (Math.PI * 2 * i) / 24 + Math.random(),
+                speed: 0.005 + Math.random() * 0.008,
+                radius: ringConfigs[ri].radius,
+            });
+        }
+
+        // ── 8. Data pulse beams (node to node) ──
+        interface PulseBeam { mesh: THREE.Mesh; startIdx: number; endIdx: number; progress: number; speed: number; active: boolean; timer: number; }
+        const pulseBeams: PulseBeam[] = [];
+        for (let i = 0; i < 6; i++) {
+            const bGeo = new THREE.SphereGeometry(0.035, 8, 8);
+            const bMat = new THREE.MeshBasicMaterial({ color: 0x22d3ee, transparent: true, opacity: 0.0 });
+            const bMesh = new THREE.Mesh(bGeo, bMat);
+            globeGroup.add(bMesh);
+            pulseBeams.push({ mesh: bMesh, startIdx: 0, endIdx: 1, progress: 0, speed: 0.015 + Math.random() * 0.01, active: false, timer: i * 60 + Math.random() * 120 });
+        }
+
+        // ── 9. Ambient particles (stars/sparkle) ──
+        const starCount = 120;
+        const starPos = new Float32Array(starCount * 3);
+        for (let i = 0; i < starCount; i++) {
+            starPos[i * 3] = (Math.random() - 0.5) * 14;
+            starPos[i * 3 + 1] = (Math.random() - 0.5) * 10;
+            starPos[i * 3 + 2] = (Math.random() - 0.5) * 8 - 3;
+        }
+        const starGeo = new THREE.BufferGeometry();
+        starGeo.setAttribute('position', new THREE.BufferAttribute(starPos, 3));
+        const starMat = new THREE.PointsMaterial({ color: 0x06b6d4, size: 0.02, transparent: true, opacity: 0.5, sizeAttenuation: true });
+        scene.add(new THREE.Points(starGeo, starMat));
+
+        // ── Mouse tracking ──
+        const mouse = { x: 0, y: 0, tx: 0, ty: 0 };
+        const onMouse = (e: MouseEvent) => {
+            mouse.tx = (e.clientX / window.innerWidth - 0.5) * 2;
+            mouse.ty = (e.clientY / window.innerHeight - 0.5) * 2;
+        };
+        window.addEventListener('mousemove', onMouse);
+
+        // ── Animation ──
+        let frameId: number;
+        const clock = new THREE.Clock();
+        let frameCount = 0;
 
         const animate = () => {
-            ctx.clearRect(0, 0, width, height);
-            const time = Date.now() * 0.001;
+            frameId = requestAnimationFrame(animate);
+            const t = clock.getElapsedTime();
+            frameCount++;
 
-            // Draw connections
-            nodes.forEach((a, i) => {
-                nodes.slice(i + 1).forEach((b) => {
-                    const dx = a.x - b.x;
-                    const dy = a.y - b.y;
-                    const dist = Math.sqrt(dx * dx + dy * dy);
-                    if (dist < 200) {
-                        ctx.beginPath();
-                        ctx.moveTo(a.x, a.y);
-                        ctx.lineTo(b.x, b.y);
-                        ctx.strokeStyle = `rgba(6, 182, 212, ${0.08 * (1 - dist / 200)})`;
-                        ctx.lineWidth = 0.5;
-                        ctx.stroke();
+            mouse.x += (mouse.tx - mouse.x) * 0.04;
+            mouse.y += (mouse.ty - mouse.y) * 0.04;
+
+            // Globe rotation
+            globeGroup.rotation.y = t * 0.12;
+            globeGroup.rotation.x = Math.sin(t * 0.06) * 0.12;
+            globeGroup.rotation.z = mouse.x * 0.08;
+
+            // Second wireframe counter-rotate
+            sphere2.rotation.y = -t * 0.05;
+
+            // Pulse wireframe opacity
+            sphereMat.opacity = 0.12 + Math.sin(t * 0.4) * 0.04;
+
+            // Pulse rings
+            rings.forEach((ring, i) => {
+                (ring.material as THREE.LineBasicMaterial).opacity = 
+                    ringConfigs[i].opacity + Math.sin(t * 0.5 + i * 2) * 0.06;
+            });
+
+            // Node pulse
+            nodes.forEach((node, i) => {
+                const s = 1 + Math.sin(t * 2.5 + i * 0.8) * 0.4;
+                node.scale.setScalar(s);
+                nodeHalos[i].scale.setScalar(s * 1.2);
+                (nodeHalos[i].material as THREE.MeshBasicMaterial).opacity = 
+                    0.15 + Math.sin(t * 2 + i) * 0.1;
+            });
+
+            // Orbital particles
+            orbParticles.forEach((p) => {
+                p.angle += p.speed;
+                const x = Math.cos(p.angle) * p.radius;
+                const y = Math.sin(p.angle) * p.radius;
+                const pos = new THREE.Vector3(x, y, 0);
+                const tilt = ringConfigs[p.ringIdx].tilt;
+                pos.applyEuler(new THREE.Euler(tilt.x, tilt.y, tilt.z));
+                p.mesh.position.copy(pos);
+                // Trail follows slightly behind
+                const tx = Math.cos(p.angle - 0.15) * p.radius;
+                const ty = Math.sin(p.angle - 0.15) * p.radius;
+                const tpos = new THREE.Vector3(tx, ty, 0);
+                tpos.applyEuler(new THREE.Euler(tilt.x, tilt.y, tilt.z));
+                p.trail.position.copy(tpos);
+                const op = 0.5 + Math.sin(p.angle * 3 + t) * 0.4;
+                (p.mesh.material as THREE.MeshBasicMaterial).opacity = Math.max(0.2, op);
+                (p.trail.material as THREE.MeshBasicMaterial).opacity = Math.max(0.05, op * 0.3);
+            });
+
+            // Pulse beams (data transfer animation)
+            pulseBeams.forEach((beam) => {
+                if (!beam.active) {
+                    beam.timer--;
+                    if (beam.timer <= 0) {
+                        beam.active = true;
+                        beam.progress = 0;
+                        beam.startIdx = Math.floor(Math.random() * nodeCount);
+                        beam.endIdx = (beam.startIdx + 1 + Math.floor(Math.random() * (nodeCount - 1))) % nodeCount;
                     }
-                });
+                    return;
+                }
+                beam.progress += beam.speed;
+                if (beam.progress > 1) {
+                    beam.active = false;
+                    beam.timer = 60 + Math.random() * 180;
+                    (beam.mesh.material as THREE.MeshBasicMaterial).opacity = 0;
+                    return;
+                }
+                const start = nodes[beam.startIdx].position;
+                const end = nodes[beam.endIdx].position;
+                beam.mesh.position.lerpVectors(start, end, beam.progress);
+                const op = Math.sin(beam.progress * Math.PI) * 0.9;
+                (beam.mesh.material as THREE.MeshBasicMaterial).opacity = op;
+                beam.mesh.scale.setScalar(1 + op * 0.5);
             });
 
-            // Draw & update nodes
-            nodes.forEach((node) => {
-                const pulse = Math.sin(time * 2 + node.pulseOffset) * 0.3 + 0.7;
+            // Star twinkle
+            const positions = starGeo.attributes.position.array as Float32Array;
+            for (let i = 0; i < starCount; i++) {
+                positions[i * 3 + 1] += Math.sin(t * 0.3 + i * 0.5) * 0.0003;
+            }
+            starGeo.attributes.position.needsUpdate = true;
 
-                ctx.beginPath();
-                ctx.arc(node.x, node.y, node.radius * pulse, 0, Math.PI * 2);
-                ctx.fillStyle = node.color;
-                ctx.globalAlpha = 0.6;
-                ctx.fill();
+            // Camera parallax
+            camera.position.x += (mouse.x * 0.4 - camera.position.x) * 0.025;
+            camera.position.y += (-mouse.y * 0.3 - camera.position.y) * 0.025;
+            camera.lookAt(0, 0, 0);
 
-                // Glow
-                ctx.beginPath();
-                ctx.arc(node.x, node.y, node.radius * pulse * 3, 0, Math.PI * 2);
-                const gradient = ctx.createRadialGradient(node.x, node.y, 0, node.x, node.y, node.radius * pulse * 3);
-                gradient.addColorStop(0, node.color + '30');
-                gradient.addColorStop(1, 'transparent');
-                ctx.fillStyle = gradient;
-                ctx.globalAlpha = 0.4;
-                ctx.fill();
-                ctx.globalAlpha = 1;
-
-                node.x += node.vx;
-                node.y += node.vy;
-                if (node.x < 0 || node.x > width) node.vx *= -1;
-                if (node.y < 0 || node.y > height) node.vy *= -1;
-            });
-
-            animationId = requestAnimationFrame(animate);
+            renderer.render(scene, camera);
         };
-
         animate();
 
-        const handleResize = () => {
-            width = window.innerWidth;
-            height = window.innerHeight;
-            canvas.width = width;
-            canvas.height = height;
+        const onResize = () => {
+            const w = container.clientWidth;
+            const h = container.clientHeight;
+            camera.aspect = w / h;
+            camera.updateProjectionMatrix();
+            renderer.setSize(w, h);
         };
-        window.addEventListener('resize', handleResize);
+        window.addEventListener('resize', onResize);
 
         return () => {
-            cancelAnimationFrame(animationId);
-            window.removeEventListener('resize', handleResize);
+            cancelAnimationFrame(frameId);
+            window.removeEventListener('mousemove', onMouse);
+            window.removeEventListener('resize', onResize);
+            renderer.dispose();
+            if (container.contains(renderer.domElement)) {
+                container.removeChild(renderer.domElement);
+            }
         };
     }, []);
 
-    return <canvas ref={canvasRef} className="absolute inset-0 z-0" />;
+    return <div ref={mountRef} className="absolute inset-0 z-0" />;
 }
 
 export default function Hero() {
     return (
         <section className="relative min-h-screen flex items-center justify-center overflow-hidden">
-            {/* Background layers */}
+            {/* Deep background */}
             <div className="absolute inset-0 bg-navy-950" />
-            <div className="absolute inset-0 bg-gradient-to-b from-cyan/5 via-transparent to-transparent" />
-            <div className="absolute inset-0 bg-gradient-to-r from-purple/5 via-transparent to-blue/5" />
+            <div className="absolute inset-0 bg-gradient-to-b from-cyan/[0.04] via-transparent to-navy-900/80" />
+            <div className="absolute inset-0 bg-gradient-to-tr from-purple/[0.03] via-transparent to-blue/[0.03]" />
 
-            {/* Animated orbs */}
-            <div className="absolute top-1/4 -left-32 w-96 h-96 bg-cyan/10 rounded-full blur-3xl animate-pulse-slow" />
-            <div className="absolute bottom-1/4 -right-32 w-96 h-96 bg-purple/10 rounded-full blur-3xl animate-pulse-slow" style={{ animationDelay: '1.5s' }} />
-            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-blue/5 rounded-full blur-3xl animate-pulse-slow" style={{ animationDelay: '0.75s' }} />
+            {/* Multi-layered radial glow behind globe — pulsing, breathing effect */}
+            <div
+                className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[900px] h-[900px] rounded-full blur-3xl"
+                style={{
+                    background: 'radial-gradient(circle, rgba(6,182,212,0.10) 0%, rgba(59,130,246,0.04) 40%, transparent 70%)',
+                    animation: 'pulseGlow 6s ease-in-out infinite',
+                }}
+            />
+            <div
+                className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[700px] rounded-full blur-3xl"
+                style={{
+                    background: 'radial-gradient(circle, rgba(139,92,246,0.08) 0%, rgba(59,130,246,0.03) 50%, transparent 70%)',
+                    animation: 'pulseGlow 8s ease-in-out 2s infinite',
+                }}
+            />
+            <div
+                className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] rounded-full blur-2xl"
+                style={{
+                    background: 'radial-gradient(circle, rgba(34,211,238,0.06) 0%, transparent 60%)',
+                    animation: 'pulseGlow 5s ease-in-out 1s infinite',
+                }}
+            />
 
-            {/* Network nodes canvas */}
-            <FloatingNodes />
+            {/* 3D Globe */}
+            <NetworkGlobe />
 
             {/* Grid overlay */}
-            <div className="absolute inset-0 bg-grid opacity-30" />
+            <div className="absolute inset-0 bg-grid opacity-10" />
 
             {/* Content */}
             <div className="relative z-10 max-w-5xl mx-auto px-4 sm:px-6 text-center">
@@ -153,11 +370,11 @@ export default function Hero() {
                         transition={{ delay: 0.3, duration: 0.8 }}
                         className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold leading-tight tracking-tight mb-6"
                     >
-                        <span className="text-white">Detect Cross-Bank</span>
+                        <span className="text-white drop-shadow-lg">Detect Cross-Bank</span>
                         <br />
                         <span className="gradient-text">Fraud Networks</span>
                         <br />
-                        <span className="text-white">Without Sharing</span>{' '}
+                        <span className="text-white drop-shadow-lg">Without Sharing</span>{' '}
                         <span className="gradient-text">Sensitive Data</span>
                     </motion.h1>
 
@@ -166,7 +383,7 @@ export default function Hero() {
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ delay: 0.5, duration: 0.8 }}
-                        className="text-lg sm:text-xl text-slate-400 max-w-3xl mx-auto mb-10 leading-relaxed"
+                        className="text-lg sm:text-xl text-slate-300 max-w-3xl mx-auto mb-10 leading-relaxed"
                     >
                         FinAlliance enables financial institutions to collaboratively detect fraud
                         using federated learning while preserving customer privacy and regulatory compliance.
@@ -180,19 +397,19 @@ export default function Hero() {
                         className="flex flex-col sm:flex-row items-center justify-center gap-4"
                     >
                         <a
-                            href="#architecture"
-                            className="group px-8 py-3.5 rounded-xl bg-gradient-to-r from-cyan to-blue text-white font-semibold hover:shadow-xl hover:shadow-cyan/20 transition-all duration-300 hover:scale-105 flex items-center gap-2"
+                            href="/dashboard"
+                            className="group px-8 py-3.5 rounded-xl bg-gradient-to-r from-cyan to-blue text-white font-semibold hover:shadow-xl hover:shadow-cyan/25 transition-all duration-300 hover:scale-105 flex items-center gap-2"
                         >
-                            View Architecture
+                            Open Dashboard
                             <svg className="w-5 h-5 group-hover:translate-x-1 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                                 <path strokeLinecap="round" strokeLinejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6" />
                             </svg>
                         </a>
                         <a
-                            href="#ai-models"
-                            className="px-8 py-3.5 rounded-xl glass border border-cyan/20 text-slate-300 font-semibold hover:text-white hover:border-cyan/40 transition-all duration-300 hover:scale-105"
+                            href="/fraud-check"
+                            className="px-8 py-3.5 rounded-xl glass border border-cyan/20 text-slate-200 font-semibold hover:text-white hover:border-cyan/40 hover:shadow-lg hover:shadow-cyan/10 transition-all duration-300 hover:scale-105"
                         >
-                            See AI Models
+                            Try Fraud Check
                         </a>
                     </motion.div>
                 </motion.div>
@@ -207,7 +424,7 @@ export default function Hero() {
                     <motion.div
                         animate={{ y: [0, 10, 0] }}
                         transition={{ repeat: Infinity, duration: 2, ease: 'easeInOut' }}
-                        className="w-6 h-10 rounded-full border-2 border-slate-600 flex justify-center pt-2"
+                        className="w-6 h-10 rounded-full border-2 border-slate-500 flex justify-center pt-2"
                     >
                         <div className="w-1.5 h-3 rounded-full bg-cyan" />
                     </motion.div>

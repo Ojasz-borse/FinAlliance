@@ -2,7 +2,7 @@
 
 import { motion } from 'framer-motion';
 import { useInView } from 'framer-motion';
-import { useRef } from 'react';
+import { useRef, useEffect, useState } from 'react';
 
 const barriers = [
     {
@@ -14,6 +14,7 @@ const barriers = [
         title: 'Privacy Regulations',
         description: 'GDPR, CCPA, and banking regulations strictly prohibit sharing raw customer transaction data between institutions.',
         color: 'from-cyan to-blue',
+        accent: '#06b6d4',
     },
     {
         icon: (
@@ -24,6 +25,7 @@ const barriers = [
         title: 'Customer Confidentiality',
         description: 'Banks have fiduciary duties to protect customer information. Sharing data would breach trust and legal obligations.',
         color: 'from-blue to-purple',
+        accent: '#3b82f6',
     },
     {
         icon: (
@@ -34,6 +36,7 @@ const barriers = [
         title: 'Regulatory Compliance',
         description: 'Cross-institutional data sharing requires complex regulatory approvals that can take years to establish.',
         color: 'from-purple to-cyan',
+        accent: '#8b5cf6',
     },
     {
         icon: (
@@ -44,6 +47,7 @@ const barriers = [
         title: 'Competitive Restrictions',
         description: 'Banks are competitive entities. Sharing fraud intelligence could reveal business strategies and customer patterns.',
         color: 'from-emerald to-cyan',
+        accent: '#10b981',
     },
 ];
 
@@ -54,13 +58,67 @@ const fraudTypes = [
     { label: 'Money Laundering', icon: '💰' },
 ];
 
+// Floating particles component
+function FloatingParticles({ count = 20, color = '#06b6d4' }: { count?: number; color?: string }) {
+    const [particles] = useState(() =>
+        Array.from({ length: count }, (_, i) => ({
+            id: i,
+            x: Math.random() * 100,
+            y: Math.random() * 100,
+            size: 2 + Math.random() * 3,
+            duration: 15 + Math.random() * 20,
+            delay: Math.random() * 10,
+        }))
+    );
+
+    return (
+        <div className="absolute inset-0 overflow-hidden pointer-events-none">
+            {particles.map((p) => (
+                <motion.div
+                    key={p.id}
+                    className="absolute rounded-full"
+                    style={{
+                        width: p.size,
+                        height: p.size,
+                        left: `${p.x}%`,
+                        top: `${p.y}%`,
+                        backgroundColor: color,
+                        opacity: 0.15,
+                    }}
+                    animate={{
+                        y: [-20, 20, -20],
+                        x: [-10, 10, -10],
+                        opacity: [0.1, 0.3, 0.1],
+                    }}
+                    transition={{
+                        duration: p.duration,
+                        delay: p.delay,
+                        repeat: Infinity,
+                        ease: 'easeInOut',
+                    }}
+                />
+            ))}
+        </div>
+    );
+}
+
 export default function ProblemSection() {
     const ref = useRef(null);
     const isInView = useInView(ref, { once: true, margin: '-100px' });
 
     return (
-        <section id="problem" className="section-padding relative" ref={ref}>
-            <div className="absolute inset-0 bg-gradient-to-b from-transparent via-navy-900/50 to-transparent" />
+        <section id="problem" className="section-padding relative overflow-hidden" ref={ref}>
+            {/* Animated background */}
+            <div className="absolute inset-0 bg-gradient-to-b from-navy-950 via-navy-900/80 to-navy-950" />
+            <div className="absolute inset-0 bg-grid opacity-10" />
+            
+            {/* Animated orbs */}
+            <div className="absolute top-0 right-0 w-[400px] h-[400px] bg-red-500/[0.04] rounded-full blur-[100px] animate-float-slow" />
+            <div className="absolute bottom-0 left-0 w-[400px] h-[400px] bg-cyan/[0.04] rounded-full blur-[100px] animate-float" />
+            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-purple/[0.03] rounded-full blur-[120px] animate-pulse-slow" />
+
+            {/* Floating particles */}
+            <FloatingParticles count={25} color="#ef4444" />
 
             <div className="relative z-10 max-w-7xl mx-auto">
                 {/* Header */}
@@ -70,9 +128,14 @@ export default function ProblemSection() {
                     transition={{ duration: 0.7 }}
                     className="text-center mb-16"
                 >
-                    <span className="inline-block px-4 py-1.5 mb-4 text-sm font-medium text-cyan-light bg-cyan/10 rounded-full border border-cyan/20">
-                        The Challenge
-                    </span>
+                    <motion.span
+                        initial={{ opacity: 0, scale: 0.8 }}
+                        animate={isInView ? { opacity: 1, scale: 1 } : {}}
+                        transition={{ delay: 0.1, duration: 0.5 }}
+                        className="inline-block px-4 py-1.5 mb-4 text-sm font-medium text-red-300 bg-red-500/10 rounded-full border border-red-500/20"
+                    >
+                        ⚠️ The Challenge
+                    </motion.span>
                     <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-white mb-6">
                         The Cross-Bank Fraud{' '}
                         <span className="gradient-text">Detection Problem</span>
@@ -96,7 +159,8 @@ export default function ProblemSection() {
                             initial={{ opacity: 0, scale: 0.8 }}
                             animate={isInView ? { opacity: 1, scale: 1 } : {}}
                             transition={{ delay: 0.3 + i * 0.1, duration: 0.5 }}
-                            className="flex items-center gap-2 px-5 py-2.5 rounded-full glass border border-white/5 hover:border-cyan/30 transition-all duration-300"
+                            whileHover={{ scale: 1.05, y: -3 }}
+                            className="flex items-center gap-2 px-5 py-2.5 rounded-full glass border border-white/5 hover:border-red-500/30 transition-all duration-300 cursor-default"
                         >
                             <span className="text-xl">{type.icon}</span>
                             <span className="text-sm font-medium text-slate-300">{type.label}</span>
@@ -109,9 +173,11 @@ export default function ProblemSection() {
                     initial={{ opacity: 0, y: 20 }}
                     animate={isInView ? { opacity: 1, y: 0 } : {}}
                     transition={{ delay: 0.4, duration: 0.7 }}
-                    className="glass rounded-2xl p-8 mb-16 max-w-4xl mx-auto border border-cyan/10"
+                    className="relative glass rounded-2xl p-8 mb-16 max-w-4xl mx-auto border border-red-500/10 group hover:border-red-500/20 transition-all duration-500"
                 >
-                    <div className="flex items-start gap-4">
+                    {/* Animated glow */}
+                    <div className="absolute -inset-0.5 bg-gradient-to-r from-red-500/10 to-orange-500/10 rounded-2xl blur-xl opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                    <div className="relative flex items-start gap-4">
                         <div className="w-10 h-10 rounded-lg bg-red-500/10 flex items-center justify-center flex-shrink-0 mt-1">
                             <svg className="w-5 h-5 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                                 <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
@@ -140,14 +206,21 @@ export default function ProblemSection() {
                             initial={{ opacity: 0, y: 30 }}
                             animate={isInView ? { opacity: 1, y: 0 } : {}}
                             transition={{ delay: 0.5 + i * 0.15, duration: 0.6 }}
-                            className="group glass rounded-2xl p-6 hover:border-cyan/30 transition-all duration-500 cursor-default"
+                            whileHover={{ y: -5, scale: 1.01 }}
+                            className="group relative"
                         >
-                            <div className={`w-14 h-14 rounded-xl bg-gradient-to-br ${barrier.color} bg-opacity-10 flex items-center justify-center mb-4 text-white/80 group-hover:scale-110 transition-transform duration-300`}
-                                style={{ background: `linear-gradient(135deg, ${barrier.color === 'from-cyan to-blue' ? 'rgba(6,182,212,0.15), rgba(59,130,246,0.15)' : barrier.color === 'from-blue to-purple' ? 'rgba(59,130,246,0.15), rgba(139,92,246,0.15)' : barrier.color === 'from-purple to-cyan' ? 'rgba(139,92,246,0.15), rgba(6,182,212,0.15)' : 'rgba(16,185,129,0.15), rgba(6,182,212,0.15)'})` }}>
-                                {barrier.icon}
+                            {/* Glow background */}
+                            <div className="absolute -inset-0.5 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-500 blur-xl"
+                                style={{ backgroundColor: barrier.accent + '15' }} />
+                            
+                            <div className="relative glass rounded-2xl p-6 hover:border-cyan/20 transition-all duration-500 cursor-default h-full">
+                                <div className="w-14 h-14 rounded-xl flex items-center justify-center mb-4 text-white/80 group-hover:scale-110 transition-transform duration-300"
+                                    style={{ background: `linear-gradient(135deg, ${barrier.accent}20, ${barrier.accent}05)` }}>
+                                    {barrier.icon}
+                                </div>
+                                <h3 className="text-lg font-semibold text-white mb-2 group-hover:text-cyan-light transition-colors">{barrier.title}</h3>
+                                <p className="text-slate-400 text-sm leading-relaxed">{barrier.description}</p>
                             </div>
-                            <h3 className="text-lg font-semibold text-white mb-2">{barrier.title}</h3>
-                            <p className="text-slate-400 text-sm leading-relaxed">{barrier.description}</p>
                         </motion.div>
                     ))}
                 </div>

@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import TransactionTable from '../../components/TransactionTable';
-import FederatedPanel from '../../components/FederatedPanel';
+import Link from 'next/link';
 import { transactionService } from '../../services/transactionService';
 import { fraudService } from '../../services/fraudService';
 import { Transaction } from '../../types/fraud';
@@ -77,7 +77,7 @@ export default function DashboardPage() {
                     <p className="text-sm font-medium text-slate-400 mb-1">Total Transactions</p>
                     <div className="flex items-baseline gap-2">
                         <h3 className="text-3xl font-bold text-white">{transactions.length}</h3>
-                        <span className="text-xs text-blue-400 bg-blue-500/10 px-2 rounded">+12%</span>
+                        <span className="text-xs text-blue-400 bg-blue-500/10 px-2 rounded">Live Data</span>
                     </div>
                 </motion.div>
 
@@ -91,7 +91,7 @@ export default function DashboardPage() {
                     <p className="text-sm font-medium text-slate-400 mb-1">High Risk Alerts</p>
                     <div className="flex items-baseline gap-2">
                         <h3 className="text-3xl font-bold text-red-400">{highRiskAlerts.length}</h3>
-                        <span className="text-xs text-red-400 bg-red-500/10 px-2 rounded">Requires Review</span>
+                        <span className="text-xs text-red-400 bg-red-500/10 px-2 rounded">{highRiskAlerts.length > 0 ? 'Action Required' : 'All Clear'}</span>
                     </div>
                 </motion.div>
 
@@ -105,7 +105,7 @@ export default function DashboardPage() {
                     <p className="text-sm font-medium text-slate-400 mb-1">Average Risk Score</p>
                     <div className="flex items-baseline gap-2">
                         <h3 className="text-3xl font-bold text-emerald-400">{(avgRisk * 100).toFixed(1)}%</h3>
-                        <span className="text-xs text-emerald-400 bg-emerald-500/10 px-2 rounded">Healthy</span>
+                        <span className={`text-xs px-2 rounded ${avgRisk < 0.3 ? 'text-emerald-400 bg-emerald-500/10' : 'text-yellow-400 bg-yellow-500/10'}`}>{avgRisk < 0.3 ? 'Healthy' : 'Elevated'}</span>
                     </div>
                 </motion.div>
             </div>
@@ -147,7 +147,23 @@ export default function DashboardPage() {
                         animate={{ opacity: 1, x: 0 }}
                         transition={{ delay: 0.4 }}
                     >
-                        <FederatedPanel />
+                        <Link href="/federated" className="block bg-navy-950/40 border border-purple-500/20 rounded-2xl p-6 backdrop-blur-xl hover:border-purple-500/40 transition-all group">
+                            <div className="flex items-center gap-3 mb-3">
+                                <div className="p-2 bg-purple-500/20 rounded-lg border border-purple-500/30">
+                                    <svg className="w-6 h-6 text-purple-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                        <path strokeLinecap="round" strokeLinejoin="round" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+                                    </svg>
+                                </div>
+                                <div>
+                                    <h2 className="text-lg font-semibold text-white">FL Console</h2>
+                                    <p className="text-xs text-slate-400">Train, aggregate & manage models</p>
+                                </div>
+                                <svg className="w-5 h-5 text-slate-500 ml-auto group-hover:translate-x-1 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                    <path strokeLinecap="round" strokeLinejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                                </svg>
+                            </div>
+                            <p className="text-sm text-slate-400">Open the Federated Learning Console to train models, send encrypted updates, run aggregation, and download global weights.</p>
+                        </Link>
                     </motion.div>
 
                     <motion.div

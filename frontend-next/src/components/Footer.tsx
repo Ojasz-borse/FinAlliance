@@ -12,13 +12,25 @@ const techStack = [
     'TailwindCSS',
 ];
 
+const socialLinks = [
+    { label: 'GitHub', icon: '🐙' },
+    { label: 'Documentation', icon: '📖' },
+    { label: 'API Reference', icon: '⚡' },
+];
+
 export default function Footer() {
     const ref = useRef(null);
     const isInView = useInView(ref, { once: true, margin: '-50px' });
 
     return (
-        <footer ref={ref} className="relative border-t border-white/5">
-            <div className="absolute inset-0 bg-gradient-to-t from-navy-950 to-navy-900/50" />
+        <footer ref={ref} className="relative border-t border-white/5 overflow-hidden">
+            {/* Animated background */}
+            <div className="absolute inset-0 bg-gradient-to-t from-navy-950 via-navy-900/80 to-navy-950" />
+            <div className="absolute inset-0 bg-grid opacity-5" />
+            
+            {/* Subtle animated orbs */}
+            <div className="absolute bottom-0 left-1/4 w-[300px] h-[300px] bg-cyan/[0.04] rounded-full blur-[80px] animate-pulse-slow" />
+            <div className="absolute bottom-0 right-1/4 w-[300px] h-[300px] bg-purple/[0.04] rounded-full blur-[80px] animate-pulse-slow" style={{ animationDelay: '2s' }} />
 
             <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
                 <motion.div
@@ -50,12 +62,13 @@ export default function Footer() {
                         <div>
                             <h4 className="text-sm font-semibold text-white uppercase tracking-wider mb-4">Explore</h4>
                             <ul className="space-y-2">
-                                {['Problem', 'Solution', 'Architecture', 'AI Models', 'Innovation', 'Responsible AI'].map((link) => (
+                                {['Problem', 'Solution', 'Innovation', 'Demo', 'Dashboard', 'Fraud Check'].map((link) => (
                                     <li key={link}>
                                         <a
                                             href={`#${link.toLowerCase().replace(/\s+/g, '-')}`}
-                                            className="text-sm text-slate-500 hover:text-cyan-light transition-colors duration-200"
+                                            className="text-sm text-slate-500 hover:text-cyan-light transition-colors duration-200 flex items-center gap-1.5 group"
                                         >
+                                            <span className="w-1 h-1 rounded-full bg-slate-700 group-hover:bg-cyan transition-colors" />
                                             {link}
                                         </a>
                                     </li>
@@ -68,12 +81,13 @@ export default function Footer() {
                             <h4 className="text-sm font-semibold text-white uppercase tracking-wider mb-4">Tech Stack</h4>
                             <div className="flex flex-wrap gap-2">
                                 {techStack.map((tech) => (
-                                    <span
+                                    <motion.span
                                         key={tech}
-                                        className="px-3 py-1.5 text-xs font-medium text-slate-400 bg-white/5 rounded-lg border border-white/5 hover:border-cyan/20 hover:text-cyan-light transition-all duration-200"
+                                        whileHover={{ scale: 1.05, y: -2 }}
+                                        className="px-3 py-1.5 text-xs font-medium text-slate-400 bg-white/5 rounded-lg border border-white/5 hover:border-cyan/20 hover:text-cyan-light transition-all duration-200 cursor-default"
                                     >
                                         {tech}
-                                    </span>
+                                    </motion.span>
                                 ))}
                             </div>
                         </div>

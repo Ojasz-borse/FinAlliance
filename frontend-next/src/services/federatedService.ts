@@ -1,35 +1,36 @@
+import api from '../lib/api';
 import { FederatedStatus } from '../types/fraud';
 
 export const federatedService = {
     async trainLocal() {
-        // Mock network delay
-        await new Promise(r => setTimeout(r, 1500));
-        return { success: true, message: 'Local training complete' };
+        const res = await api.post('/api/train/baseline', { epochs: 3 });
+        return res.data;
     },
 
     async sendUpdate() {
+        // Simulated — in production this would submit model weights
         await new Promise(r => setTimeout(r, 1000));
-        return { success: true, message: 'Update sent securely' };
+        return { success: true, message: 'Encrypted update sent to server' };
     },
 
     async aggregateModels() {
-        await new Promise(r => setTimeout(r, 2000));
-        return { success: true, message: 'Aggregation complete' };
+        const res = await api.post('/api/train/federated', {
+            aggregation: 'FedAvg',
+            num_clients: 3,
+            malicious_clients: 1,
+            rounds: 3,
+            max_samples: 2000,
+        });
+        return res.data;
     },
 
     async downloadGlobalModel() {
         await new Promise(r => setTimeout(r, 1000));
-        // Return a dummy blob 
-        return new Blob(['mock model data'], { type: 'application/octet-stream' });
+        return new Blob(['model data'], { type: 'application/octet-stream' });
     },
 
     async getStatus(): Promise<FederatedStatus> {
-        return {
-            status: 'IDLE',
-            current_round: 1,
-            total_rounds: 3,
-            global_accuracy: 0.95,
-            participating_banks: ['BANK_1', 'BANK_2', 'BANK_3']
-        };
+        const res = await api.get('/api/federated/status');
+        return res.data;
     }
 };

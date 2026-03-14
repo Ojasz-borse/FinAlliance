@@ -194,13 +194,53 @@ section {
 /* Animated background grid */
 .bg-grid {
   background-image:
-    linear-gradient(rgba(6, 182, 212, 0.03) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(6, 182, 212, 0.03) 1px, transparent 1px);
-  background-size: 60px 60px;
+    linear-gradient(rgba(6, 182, 212, 0.05) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(6, 182, 212, 0.05) 1px, transparent 1px);
+  background-size: 50px 50px;
 }
 
 /* Animated dots */
 .dot-pattern {
   background-image: radial-gradient(rgba(6, 182, 212, 0.15) 1px, transparent 1px);
   background-size: 30px 30px;
+}
+
+/* Shimmer effect */
+@keyframes shimmer {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
+}
+
+.shimmer {
+  position: relative;
+  overflow: hidden;
+}
+
+.shimmer::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, transparent, rgba(6, 182, 212, 0.05), transparent);
+  animation: shimmer 3s infinite;
+}
+
+/* Pulse glow for Hero background orbs */
+@keyframes pulseGlow {
+  0%, 100% {
+    transform: translate(-50%, -50%) scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: translate(-50%, -50%) scale(1.15);
+    opacity: 0.6;
+  }
+}
+
+/* Card hover glow */
+.card-glow {
+  transition: box-shadow 0.5s ease;
+}
+
+.card-glow:hover {
+  box-shadow: 0 0 40px rgba(6, 182, 212, 0.08), 0 0 80px rgba(6, 182, 212, 0.04);
 }

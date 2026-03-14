@@ -1,7 +1,7 @@
 'use client';
 
 import { motion, useInView } from 'framer-motion';
-import { useRef } from 'react';
+import { useRef, useState } from 'react';
 
 const steps = [
     {
@@ -81,10 +81,22 @@ const steps = [
 export default function SolutionSection() {
     const ref = useRef(null);
     const isInView = useInView(ref, { once: true, margin: '-100px' });
+    const [hoveredStep, setHoveredStep] = useState<number | null>(null);
 
     return (
-        <section id="solution" className="section-padding relative" ref={ref}>
-            <div className="absolute inset-0 bg-grid opacity-20" />
+        <section id="solution" className="section-padding relative overflow-hidden" ref={ref}>
+            {/* Animated background */}
+            <div className="absolute inset-0 bg-gradient-to-b from-navy-950 via-navy-900 to-navy-950" />
+            <div className="absolute inset-0 bg-grid opacity-10" />
+            
+            {/* Animated orbs */}
+            <div className="absolute top-20 left-20 w-[350px] h-[350px] bg-cyan/[0.06] rounded-full blur-[100px] animate-float" />
+            <div className="absolute bottom-20 right-20 w-[350px] h-[350px] bg-blue/[0.06] rounded-full blur-[100px] animate-float-slow" />
+            <div className="absolute top-1/3 right-1/4 w-[250px] h-[250px] bg-purple/[0.05] rounded-full blur-[80px] animate-pulse-slow" />
+
+            {/* Floating light streaks */}
+            <div className="absolute top-0 left-1/4 w-px h-full bg-gradient-to-b from-transparent via-cyan/10 to-transparent" />
+            <div className="absolute top-0 right-1/3 w-px h-full bg-gradient-to-b from-transparent via-blue/10 to-transparent" />
 
             <div className="relative z-10 max-w-6xl mx-auto">
                 {/* Header */}
@@ -94,9 +106,14 @@ export default function SolutionSection() {
                     transition={{ duration: 0.7 }}
                     className="text-center mb-20"
                 >
-                    <span className="inline-block px-4 py-1.5 mb-4 text-sm font-medium text-cyan-light bg-cyan/10 rounded-full border border-cyan/20">
-                        Our Solution
-                    </span>
+                    <motion.span
+                        initial={{ opacity: 0, scale: 0.8 }}
+                        animate={isInView ? { opacity: 1, scale: 1 } : {}}
+                        transition={{ delay: 0.1, duration: 0.5 }}
+                        className="inline-block px-4 py-1.5 mb-4 text-sm font-medium text-cyan-light bg-cyan/10 rounded-full border border-cyan/20"
+                    >
+                        🔗 Our Solution
+                    </motion.span>
                     <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-white mb-6">
                         FinAlliance{' '}
                         <span className="gradient-text">Federated Learning</span>{' '}
@@ -110,8 +127,16 @@ export default function SolutionSection() {
 
                 {/* Timeline */}
                 <div className="relative">
-                    {/* Vertical line */}
-                    <div className="absolute left-8 md:left-1/2 md:-translate-x-px top-0 bottom-0 w-0.5 bg-gradient-to-b from-cyan/50 via-blue/50 to-purple/50" />
+                    {/* Vertical line with animated glow */}
+                    <div className="absolute left-8 md:left-1/2 md:-translate-x-px top-0 bottom-0 w-0.5">
+                        <div className="absolute inset-0 bg-gradient-to-b from-cyan/40 via-blue/40 to-purple/40" />
+                        <motion.div
+                            className="absolute top-0 w-full h-20 bg-gradient-to-b from-cyan to-transparent"
+                            animate={{ top: ['0%', '100%', '0%'] }}
+                            transition={{ duration: 8, repeat: Infinity, ease: 'linear' }}
+                            style={{ opacity: 0.6 }}
+                        />
+                    </div>
 
                     {steps.map((step, i) => (
                         <motion.div
@@ -121,28 +146,56 @@ export default function SolutionSection() {
                             transition={{ delay: 0.2 + i * 0.15, duration: 0.6 }}
                             className={`relative flex items-start mb-12 last:mb-0 ${i % 2 === 0 ? 'md:flex-row' : 'md:flex-row-reverse'
                                 } flex-row`}
+                            onMouseEnter={() => setHoveredStep(i)}
+                            onMouseLeave={() => setHoveredStep(null)}
                         >
-                            {/* Timeline dot */}
-                            <div className="absolute left-8 md:left-1/2 -translate-x-1/2 w-4 h-4 rounded-full border-2 z-10"
-                                style={{ borderColor: step.color, backgroundColor: step.color + '30', boxShadow: `0 0 20px ${step.color}40` }} />
+                            {/* Timeline dot with pulse */}
+                            <div className="absolute left-8 md:left-1/2 -translate-x-1/2 z-10">
+                                <div className="w-4 h-4 rounded-full border-2"
+                                    style={{ borderColor: step.color, backgroundColor: step.color + '30', boxShadow: `0 0 20px ${step.color}40` }} />
+                                {hoveredStep === i && (
+                                    <motion.div
+                                        className="absolute inset-0 -m-2 rounded-full"
+                                        style={{ borderColor: step.color, border: `2px solid ${step.color}40` }}
+                                        initial={{ scale: 0.5, opacity: 0 }}
+                                        animate={{ scale: 2, opacity: 0 }}
+                                        transition={{ duration: 1, repeat: Infinity }}
+                                    />
+                                )}
+                            </div>
 
                             {/* Content card */}
                             <div className={`ml-16 md:ml-0 md:w-[calc(50%-2rem)] ${i % 2 === 0 ? 'md:pr-12' : 'md:pl-12'}`}>
-                                <div className="glass rounded-2xl p-6 group hover:border-cyan/30 transition-all duration-500">
-                                    <div className="flex items-center gap-3 mb-3">
-                                        <div className="w-10 h-10 rounded-lg flex items-center justify-center"
-                                            style={{ backgroundColor: step.color + '15', color: step.color }}>
-                                            {step.icon}
+                                <motion.div
+                                    whileHover={{ y: -4, scale: 1.01 }}
+                                    className="relative group"
+                                >
+                                    {/* Card glow */}
+                                    <div className="absolute -inset-0.5 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-500 blur-xl"
+                                        style={{ backgroundColor: step.color + '15' }} />
+                                    
+                                    <div className="relative glass rounded-2xl p-6 group hover:border-cyan/30 transition-all duration-500">
+                                        <div className="flex items-center gap-3 mb-3">
+                                            <div className="w-10 h-10 rounded-lg flex items-center justify-center"
+                                                style={{ backgroundColor: step.color + '15', color: step.color }}>
+                                                {step.icon}
+                                            </div>
+                                            <span className="text-xs font-mono font-bold px-2 py-1 rounded-md"
+                                                style={{ backgroundColor: step.color + '15', color: step.color }}>
+                                                STEP {step.number}
+                                            </span>
                                         </div>
-                                        <span className="text-xs font-mono font-bold px-2 py-1 rounded-md"
-                                            style={{ backgroundColor: step.color + '15', color: step.color }}>
-                                            STEP {step.number}
-                                        </span>
+                                        <h3 className="text-lg font-bold text-white mb-1 group-hover:text-cyan-light transition-colors">{step.title}</h3>
+                                        <p className="text-sm font-medium mb-2" style={{ color: step.color }}>{step.subtitle}</p>
+                                        <p className="text-sm text-slate-400 leading-relaxed">{step.description}</p>
+
+                                        {/* Decorative corner */}
+                                        <div className="absolute top-3 right-3 w-6 h-6 border-t border-r rounded-tr-lg opacity-10 group-hover:opacity-40 transition-opacity"
+                                            style={{ borderColor: step.color }} />
+                                        <div className="absolute bottom-3 left-3 w-6 h-6 border-b border-l rounded-bl-lg opacity-10 group-hover:opacity-40 transition-opacity"
+                                            style={{ borderColor: step.color }} />
                                     </div>
-                                    <h3 className="text-lg font-bold text-white mb-1">{step.title}</h3>
-                                    <p className="text-sm font-medium mb-2" style={{ color: step.color }}>{step.subtitle}</p>
-                                    <p className="text-sm text-slate-400 leading-relaxed">{step.description}</p>
-                                </div>
+                                </motion.div>
                             </div>
                         </motion.div>
                     ))}
