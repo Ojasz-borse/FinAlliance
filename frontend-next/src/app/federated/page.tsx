@@ -80,7 +80,7 @@ export default function FederatedPage() {
         addLog('Starting local model training on bank data...', 'info');
 
         try {
-            const response = await fetch('http://localhost:5000/api/train/baseline', {
+            const response = await fetch('http://localhost:5001/api/train/baseline', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ epochs: 3 }),
@@ -140,7 +140,7 @@ export default function FederatedPage() {
         addLog(`Encrypting model weights for ${selectedBank}...`, 'info');
 
         try {
-            const res = await fetch('http://localhost:5000/api/federated/send-update', {
+            const res = await fetch('http://localhost:5001/api/federated/send-update', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ bank_id: selectedBank }),
@@ -163,7 +163,7 @@ export default function FederatedPage() {
         addLog(`Starting federated aggregation: ${aggConfig.aggregation}, ${aggConfig.num_clients} clients, ${aggConfig.malicious_clients} malicious...`, 'info');
 
         try {
-            const response = await fetch('http://localhost:5000/api/train/federated', {
+            const response = await fetch('http://localhost:5001/api/train/federated', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
@@ -226,7 +226,7 @@ export default function FederatedPage() {
         addLog('Requesting global model from aggregation server...', 'info');
 
         try {
-            const res = await fetch('http://localhost:5000/api/federated/download-model');
+            const res = await fetch('http://localhost:5001/api/federated/download-model');
             const blob = await res.blob();
             const url = window.URL.createObjectURL(blob);
             const link = document.createElement('a');

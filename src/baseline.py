@@ -3,8 +3,8 @@ import torch.nn as nn
 import torch.optim as optim
 from torch.utils.data import DataLoader, Subset
 import numpy as np
-from src.models import FraudMLP
-from src.data import load_creditcard
+from src.models.simple_model import FraudMLP
+from src.data.data_utils import load_creditcard
 
 def train_baseline(epochs=5):
     """
